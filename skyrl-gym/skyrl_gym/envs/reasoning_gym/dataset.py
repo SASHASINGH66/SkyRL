@@ -9,6 +9,12 @@ from reasoning_gym.coaching.experiment import Experiment
 from reasoning_gym.dataset import ProceduralDataset
 from reasoning_gym.utils import extract_answer
 
+_dataset_registry = {}
+
+def get_dataset_from_registry(registry_key: str) -> Optional['ReasoningGymDataset']:
+    """Get a dataset from the global registry by key."""
+    return _dataset_registry.get(registry_key)
+
 
 class ReasoningGymDataset:
     """
@@ -28,6 +34,7 @@ class ReasoningGymDataset:
         dataset_name: Optional[str] = None,
         size: Optional[int] = None,
         seed: Optional[int] = None,
+        include_dataset_in_extras: bool = False,
     ):
         """
         Initialize the ReasoningGym dataset.
@@ -51,6 +58,10 @@ class ReasoningGymDataset:
         self.dataset_name = dataset_name
         self.size = size
         self.seed = seed
+        
+        # Store dataset in global registry with unique key
+        self.registry_key = f"{self.dataset_name}_{self.size}_{self.seed}"
+        _dataset_registry[self.registry_key] = self
         
         self.skyrl_dataset = self._convert_to_skyrl_format()
     
@@ -94,6 +105,7 @@ class ReasoningGymDataset:
                     "dataset_name": self.dataset_name,
                     "size": self.size,
                     "seed": self.seed,
+                    "registry_key": self.registry_key,  
                 },
             }
 
@@ -121,6 +133,7 @@ class ReasoningGymDataset:
                 "dataset_name": Value("string"),
                 "size": Value("int32"),
                 "seed": Value("int32"),
+                "registry_key": Value("string"),  # Store reference to dataset in registry
             })
         })
         
